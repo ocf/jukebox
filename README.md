@@ -2,9 +2,11 @@
 
 A web platform to collectively queue songs to play.
 
-Built on top of the current [Bjb1](https://github.com/ocf/BJukebox), dead [Bjb2](https://github.com/dkess/BJukebox2/blob/master/bjb.py), and [Ryan's](https://github.com/NotRyan) work on a similar [Bjb3](https://github.com/NotRyan/BJukebox3)
+![screenshot](screenshot.jpg)
 
-Aka Bjb 3 (2.0)
+Built on top of the old [Bjb1](https://github.com/ocf/BJukebox), the dead [Bjb2](https://github.com/dkess/BJukebox2/blob/master/bjb.py), and [Ryan's](https://github.com/NotRyan) work on a similar [Bjb3](https://github.com/NotRyan/BJukebox3)
+
+Thus, this is aka Bjb 3 (2.0)
 
 ## Usage
 
@@ -35,15 +37,3 @@ go run .
 * Avoids double requesting youtube-dl 
 * Better volume control
 * Ability to pause / resume
-
-### Todo
-
-Mainly front end improvements are needed:
- - [ ] Volume slider needs styling
- - [ ] Better error display on frontend
- - [ ] Adding new features (like pausing) to frontend
- - [ ] Better queue display - handle more people and be more compact.
- - [ ] Better mobile viewing
- - [ ] Other minor things
-    - [ ] Remove from queue button breaks styling with animation
-    - [ ] General cleanup of `site.js`

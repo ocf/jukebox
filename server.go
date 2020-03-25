@@ -40,23 +40,27 @@ func (server *Server) addConnection(c *websocket.Conn) {
 	server.mux.Unlock()
 }
 
+// Sends error back.
+func handleError(c *websocket.Conn, errText string, err error) {
+	log.Println(errText, err)
+	c.WriteMessage(websocket.TextMessage, []byte("error "+errText+" "+err.Error()))
+}
+
 func socketinit(w http.ResponseWriter, r *http.Request) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Websocket upgrade error:", err)
 	}
 	server.addConnection(c)
-	defer c.Close()
-	c.SetCloseHandler(func(code int, text string) error {
+	defer func() {
 		server.removeConnection(c)
-		return nil
-	})
-
+		c.Close()
+	}()
 	for {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("error: %v, user-agent: %v", err, r.Header.Get("User-Agent"))
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
 			}
 			return
 		}
@@ -71,10 +75,10 @@ func socketinit(w http.ResponseWriter, r *http.Request) {
 				defer socketHandle(c, []byte(messageTokens[1]))
 				return
 			}
-			c.WriteMessage(mt, []byte("error"))
+			c.WriteMessage(mt, []byte("Invalid name."))
 			continue
 		default:
-			c.WriteMessage(mt, []byte("error"))
+			c.WriteMessage(mt, []byte("Unknown message."))
 			continue
 		}
 	}
@@ -85,8 +89,8 @@ func socketHandle(c *websocket.Conn, name []byte) {
 	for {
 		mt, message, err := c.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Println("Unexpected Close:", err)
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
 			}
 			return
 		}
@@ -96,30 +100,42 @@ func socketHandle(c *websocket.Conn, name []byte) {
 			continue
 		case "skip":
 			if err := jukebox.SkipSong(); err != nil {
-				log.Println("Skip error:", err)
+				handleError(c, "Skip error:", err)
 			}
 		case "volume":
 			volume, err := strconv.Atoi(messageTokens[1])
 			if err != nil {
-				log.Println("Volume parse error:", err)
+				handleError(c, "Error parsing volume:", err)
 			} else if err := jukebox.SetVolume(volume); err != nil {
-				log.Println("Set volume error:", err)
+				handleError(c, "Error setting volume:", err)
 			}
 		case "remove":
 			songPosition, err := strconv.Atoi(messageTokens[1])
 			if err != nil {
-				log.Println("Remove parse error:", err)
+				handleError(c, "Error parsing remove:", err)
 			}
 			jukebox.RemoveSong(string(name), songPosition)
 		case "queue":
 			songurl := messageTokens[1]
 			err := jukebox.AddSongURL(string(name), songurl)
 			if err != nil {
-				log.Println("Error adding songurl:", err)
+				handleError(c, "Error adding song:", err)
+			} else {
+				c.WriteMessage(mt, []byte("ok"))
 			}
-			c.WriteMessage(mt, []byte("ok"))
+		case "pause":
+			err := jukebox.Pause()
+			if err != nil {
+				handleError(c, "Error pausing:", err)
+			}
+		case "resume":
+			err := jukebox.Resume()
+			if err != nil {
+				handleError(c, "Error resuming:", err)
+			}
 		default:
 			log.Println("Illegal command:", messageTokens[0])
+			c.WriteMessage(mt, []byte("Illegal command: "+messageTokens[0]))
 		}
 		sendState()
 	}
@@ -228,7 +244,7 @@ func main() {
 	// Playlist test https://www.youtube.com/watch?v=W3J9-OvxNpo&list=PLmIf0JO7SvbKxGuse9T19m_mHBm4oNG7y
 
 	server = initServer()
-	fs := http.FileServer(http.Dir("./priv"))
+	fs := http.FileServer(http.Dir("./dist"))
 	http.Handle("/", fs)
 	http.HandleFunc("/ws", socketinit)
 	log.Println("Starting up server on " + host + ":" + port)
