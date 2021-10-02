@@ -196,32 +196,48 @@ func main() {
 	jukebox = NewJukebox(conn)
 
 	log.Println("Attempting MPD Player Watcher connection")
-	w, err := mpd.NewWatcher("tcp", mpdhost+":"+mpdport, "", "player")
+	w, err := mpd.NewWatcher("tcp", mpdhost+":"+mpdport, "", "player", "mixer")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println("Successfully watching MPD")
 	defer w.Close()
 	go func() {
-		for range w.Event {
+		for event := range w.Event {
 			status, err := conn.Status()
 			if err != nil {
 				log.Println("Status fetch error:", err)
 			}
-			switch status["state"] {
-			case "play":
-			case "stop": // When music stops, move onto the next song
-				// Extremely annoying, but mpd won't know a stream URL won't decode correctly
-				// until it after it responded that it played successfully. Therefore, only
-				// here can we handle a broken youtube-dl streamURL.
-				if err, ok := status["error"]; ok {
-					log.Println("Playback error:", err)
+			log.Println("ev:", event)
+			switch event {
+			case "player":
+				switch status["state"] {
+				case "play":
+				case "stop": // When music stops, move onto the next song
+					// Extremely annoying, but mpd won't know a stream URL
+					// won't decode correctly until it after it responded that
+					// it played successfully. Therefore, only here can we
+					// handle a broken youtube-dl streamURL.
+					if err, ok := status["error"]; ok {
+						log.Println("Playback error:", err)
+					}
+					if err := jukebox.CycleSong(); err != nil {
+						log.Println("Cycle song error:", err)
+					}
+					sendState()
+				case "pause":
 				}
-				if err := jukebox.CycleSong(); err != nil {
-					log.Println("Cycle song error:", err)
+			case "mixer":
+				volStr, ok := status["volume"]
+				if !ok {
+					continue
 				}
+				vol, err := strconv.Atoi(volStr)
+				if err != nil {
+					log.Println("Volume read error:", err)
+				}
+				jukebox.Volume = vol
 				sendState()
-			case "pause":
 			}
 		}
 	}()
