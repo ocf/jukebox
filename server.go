@@ -208,7 +208,6 @@ func main() {
 			if err != nil {
 				log.Println("Status fetch error:", err)
 			}
-			log.Println("ev:", event)
 			switch event {
 			case "player":
 				switch status["state"] {
