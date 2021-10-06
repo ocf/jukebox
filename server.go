@@ -234,9 +234,10 @@ func main() {
 				vol, err := strconv.Atoi(volStr)
 				if err != nil {
 					log.Println("Volume read error:", err)
+				} else {
+					jukebox.Volume = vol
+					sendState()
 				}
-				jukebox.Volume = vol
-				sendState()
 			}
 		}
 	}()
