@@ -156,8 +156,8 @@ window.onload = () => {
   setInterval(heartbeat, 15000);
 
   // make error messages disappear when we click on them
-  document.getElementById('error').onclick = (event) => { event.target.hidden = false; };
-  document.getElementById('nameerror').onclick = (event) => { event.target.hidden = false; };
+  document.getElementById('error').onclick = (event) => { event.target.hidden = true; };
+  document.getElementById('nameerror').onclick = (event) => { event.target.hidden = true; };
 
   document.getElementById('b-entername').onclick = submitName;
   document.getElementById('b-songurl').onclick = submitSong;
