@@ -127,8 +127,10 @@ function wsInit() {
       sock.onmessage = socketHandler;
     } else if (event.data === 'pong') {
     } else { // Error
-      document.getElementById('nameerror').innerText = event.data;
-      document.getElementById('nameerror').hidden = false;
+      if (event.data === 'Invalid name.') {
+        document.getElementById('nameerror').innerText = event.data;
+        document.getElementById('nameerror').hidden = false;
+      }
     }
     isAlive = true;
   };
