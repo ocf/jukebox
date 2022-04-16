@@ -240,6 +240,7 @@ func main() {
 				}
 			}
 		}
+		log.Fatalln("listener connection closed")
 	}()
 	// Log errors.
 	log.Println("Attempting MPD Error Watcher connection")
