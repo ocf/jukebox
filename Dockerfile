@@ -1,8 +1,8 @@
 # build stage
-FROM golang:alpine AS build-env
+FROM golang:1.18 AS build-env
 WORKDIR /src
 COPY . .
-RUN CGO_ENABLED=0 go build -o .
+RUN CGO_ENABLED=0 go build .
 
 # final stage
 FROM python:3-slim-bullseye
