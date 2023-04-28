@@ -1,3 +1,0 @@
-servicePipeline(
-    upstreamProjects: [],
-)
