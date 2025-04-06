@@ -37,3 +37,4 @@ go run .
 * Avoids double requesting youtube-dl 
 * Better volume control
 * Ability to pause / resume
+* Song cache
